@@ -4,10 +4,10 @@
  * On 401, onUnauth() is called (clear auth and redirect to home).
  */
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "http://localhost:5001";
 
 let getToken = () => null;
-let onUnauth = () => {};
+let onUnauth = () => { };
 
 export function setAuthHandlers(tokenGetter, unauthCallback) {
   getToken = tokenGetter;

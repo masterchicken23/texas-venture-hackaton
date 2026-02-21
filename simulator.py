@@ -160,6 +160,11 @@ def get_economics_summary(now: datetime | None = None) -> dict:
     jobs_per_hour = max(5, int(12 + 8 * math.sin((hour - 10) * 0.3)))
     active_vehicles = 22 + (now.minute % 5)
     total_fleet = 30
+    # New metrics for hackathon demo
+    total_compute_hours = round(1840 + hour * 42 + now.minute * 0.7, 1)
+    cloud_cost_equivalent = round(compute_revenue * 3.2, 2)  # 3.2x cheaper than AWS/GCP
+    cost_savings_pct = round((1 - compute_revenue / cloud_cost_equivalent) * 100, 1) if cloud_cost_equivalent else 0
+    co2_offset_tons = round(total_compute_hours * 0.0042, 2)  # ~4.2 kg CO₂ per compute-hour displaced
     return {
         "ride_revenue": ride_revenue,
         "compute_revenue": compute_revenue,
@@ -167,4 +172,8 @@ def get_economics_summary(now: datetime | None = None) -> dict:
         "jobs_per_hour": jobs_per_hour,
         "active_vehicles": min(active_vehicles, total_fleet),
         "total_fleet": total_fleet,
+        "total_compute_hours": total_compute_hours,
+        "cloud_cost_equivalent": cloud_cost_equivalent,
+        "cost_savings_pct": cost_savings_pct,
+        "co2_offset_tons": co2_offset_tons,
     }

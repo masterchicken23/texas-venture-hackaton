@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -46,7 +47,7 @@ export default function EconomicsView() {
           };
           return [...prev, newPoint].slice(-CHART_POINTS);
         });
-      } catch (_) {}
+      } catch (_) { }
     };
     appendPoint();
     const id = setInterval(appendPoint, APPEND_INTERVAL_MS);
@@ -62,6 +63,10 @@ export default function EconomicsView() {
     [chartData]
   );
 
+  const totalRevenue = summary
+    ? (summary.ride_revenue + summary.compute_revenue + summary.grid_arbitrage).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : "—";
+
   return (
     <div className="economics-view">
       <h1 className="view-title">ECONOMICS</h1>
@@ -69,6 +74,16 @@ export default function EconomicsView() {
       <div className="economics-chart-wrap">
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={displayData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+            <defs>
+              <linearGradient id="ercotGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="jobsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#00ff88" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#00ff88" stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
             <XAxis
               dataKey="label"
@@ -98,6 +113,23 @@ export default function EconomicsView() {
               labelFormatter={formatTime}
             />
             <Legend />
+            <Area
+              yAxisId="ercot"
+              type="monotone"
+              dataKey="ercot"
+              name="ERCOT $/MWh"
+              stroke="transparent"
+              fill="url(#ercotGradient)"
+            />
+            <Area
+              yAxisId="jobs"
+              type="monotone"
+              dataKey="jobsPerHour"
+              name="Jobs/hr (area)"
+              stroke="transparent"
+              fill="url(#jobsGradient)"
+              legendType="none"
+            />
             <Line
               yAxisId="ercot"
               type="monotone"
@@ -106,6 +138,7 @@ export default function EconomicsView() {
               stroke="#f59e0b"
               strokeWidth={2}
               dot={false}
+              legendType="none"
             />
             <Line
               yAxisId="jobs"
@@ -134,10 +167,44 @@ export default function EconomicsView() {
           </span>
         </div>
         <div className="revenue-card">
-          <span className="revenue-label">GRID ARBITRAGE</span>
+          <span className="revenue-label">TOTAL REVENUE</span>
           <span className="revenue-value">
+            ${totalRevenue}
+          </span>
+        </div>
+      </div>
+
+      <div className="economics-extra-cards">
+        <div className="economics-extra-card">
+          <div className="eco-card-icon">⚡</div>
+          <span className="eco-card-label">GRID ARBITRAGE</span>
+          <span className="eco-card-value green">
             ${summary?.grid_arbitrage?.toLocaleString() ?? "—"}
           </span>
+        </div>
+        <div className="economics-extra-card">
+          <div className="eco-card-icon">☁️</div>
+          <span className="eco-card-label">CLOUD EQUIVALENT</span>
+          <span className="eco-card-value amber">
+            ${summary?.cloud_cost_equivalent?.toLocaleString() ?? "—"}
+          </span>
+          <span className="eco-card-sub">What it would cost on AWS/GCP</span>
+        </div>
+        <div className="economics-extra-card">
+          <div className="eco-card-icon">💰</div>
+          <span className="eco-card-label">COST SAVINGS</span>
+          <span className="eco-card-value green">
+            {summary?.cost_savings_pct ?? "—"}%
+          </span>
+          <span className="eco-card-sub">vs. traditional cloud</span>
+        </div>
+        <div className="economics-extra-card">
+          <div className="eco-card-icon">🌱</div>
+          <span className="eco-card-label">CO₂ OFFSET</span>
+          <span className="eco-card-value">
+            {summary?.co2_offset_tons ?? "—"}t
+          </span>
+          <span className="eco-card-sub">Displaced from data centers</span>
         </div>
       </div>
     </div>

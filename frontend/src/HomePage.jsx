@@ -15,6 +15,12 @@ const PARTNERS = [
   { name: "Volkswagen Moia", accent: "#00C9A7" },
 ];
 
+const HOW_IT_WORKS = [
+  { icon: "🅿️", title: "Park", desc: "AVs dock at charging hubs" },
+  { icon: "⚡", title: "Connect", desc: "Join the compute mesh" },
+  { icon: "🧠", title: "Compute", desc: "Run AI workloads at 68% less cost" },
+];
+
 function vehicleIcon(fill, pulse) {
   const div = document.createElement("div");
   div.className = `home-vehicle-dot ${pulse ? "pulse" : ""}`;
@@ -78,6 +84,27 @@ function MapContent({ vehicles }) {
   return <VehicleLayer vehicles={vehicles} />;
 }
 
+function useCountUp(target, duration = 1500) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    const start = performance.now();
+    const tick = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      setValue(Math.round(target * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+  return value;
+}
+
+function TrendArrow({ trend }) {
+  if (!trend) return null;
+  const arrow = trend === "rising" ? "↑" : trend === "falling" ? "↓" : "→";
+  return <span className={`trend-indicator trend-${trend}`}>{arrow}</span>;
+}
+
 export default function HomePage({ onLogin }) {
   const [showLogin, setShowLogin] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -97,7 +124,7 @@ export default function HomePage({ onLogin }) {
           setVehicles(v);
           setErcot(e);
         }
-      } catch (_) {}
+      } catch (_) { }
     };
     fetchData();
     const id = setInterval(fetchData, 5000);
@@ -111,6 +138,10 @@ export default function HomePage({ onLogin }) {
     () => vehicles.filter((v) => v.status === "compute_active").length,
     [vehicles]
   );
+
+  const computeHours = useCountUp(1840);
+  const costSavings = useCountUp(68);
+  const co2Saved = useCountUp(7);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -174,11 +205,51 @@ export default function HomePage({ onLogin }) {
         </button>
       </header>
 
+      {/* Hero overlay */}
+      <div className="home-hero">
+        <h1 className="hero-headline">
+          Turn Idle AVs Into Distributed Compute Nodes
+        </h1>
+        <p className="hero-sub">
+          Autonomous vehicles park, plug in, and run AI workloads — powered by ERCOT grid arbitrage
+        </p>
+        <div className="hero-stats">
+          <div className="hero-stat">
+            <span className="hero-stat-value">{computeHours.toLocaleString()}</span>
+            <span className="hero-stat-label">Compute Hours</span>
+          </div>
+          <div className="hero-stat">
+            <span className="hero-stat-value">{costSavings}%</span>
+            <span className="hero-stat-label">Cost Savings</span>
+          </div>
+          <div className="hero-stat">
+            <span className="hero-stat-value">{co2Saved}t</span>
+            <span className="hero-stat-label">CO₂ Offset</span>
+          </div>
+        </div>
+      </div>
+
+      {/* How it works */}
+      <div className="home-how-it-works">
+        {HOW_IT_WORKS.map((step) => (
+          <div key={step.title} className="how-step">
+            <div className="how-step-icon">{step.icon}</div>
+            <div className="how-step-title">{step.title}</div>
+            <div className="how-step-desc">{step.desc}</div>
+          </div>
+        ))}
+      </div>
+
       <div className="home-bottom-card">
         <div className="home-card-row">
           <span className="home-card-label">ERCOT</span>
           <span className="home-card-value">
-            {ercot != null ? `$${ercot.price}/MWh` : "—"}
+            {ercot != null ? (
+              <>
+                ${ercot.price}/MWh
+                <TrendArrow trend={ercot.trend} />
+              </>
+            ) : "—"}
           </span>
         </div>
         <div className="home-card-row">

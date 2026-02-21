@@ -32,6 +32,13 @@ function FleetVehicleMarker({ vehicle }) {
   return <Marker position={[vehicle.lat, vehicle.lng]} icon={icon} />;
 }
 
+const STATUS_CONFIG = {
+  compute_active: { label: "Computing", color: "#00ff88" },
+  charging: { label: "Charging", color: "#4A9EFF" },
+  in_service: { label: "In Service", color: "#ffffff" },
+  idle: { label: "Idle", color: "#6b7280" },
+};
+
 export default function FleetView() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,10 +61,18 @@ export default function FleetView() {
     return () => clearInterval(id);
   }, []);
 
+  const statusCounts = useMemo(() => {
+    const counts = {};
+    for (const v of vehicles) {
+      counts[v.status] = (counts[v.status] || 0) + 1;
+    }
+    return counts;
+  }, [vehicles]);
+
   const byHub = useMemo(() => {
     const map = new Map();
     for (const v of vehicles) {
-      const hub = v.hub_id || "No hub";
+      const hub = v.hub_id || "Roaming";
       if (!map.has(hub)) map.set(hub, []);
       map.get(hub).push(v);
     }
@@ -68,6 +83,23 @@ export default function FleetView() {
     <div className="fleet-view">
       <h1 className="view-title">FLEET STATUS</h1>
       {error && <p className="view-error">{error}</p>}
+
+      {/* Summary bar */}
+      <div className="fleet-summary-bar">
+        {Object.entries(STATUS_CONFIG).map(([status, cfg]) => (
+          <div key={status} className="fleet-summary-item">
+            <span className="fleet-summary-dot" style={{ background: cfg.color }} />
+            <span className="fleet-summary-count">{statusCounts[status] || 0}</span>
+            <span>{cfg.label}</span>
+          </div>
+        ))}
+        <div className="fleet-summary-item">
+          <span className="fleet-summary-count" style={{ color: "#e2e8f0" }}>
+            {vehicles.length}
+          </span>
+          <span>Total</span>
+        </div>
+      </div>
 
       <div className="fleet-map-wrap">
         <MapContainer
