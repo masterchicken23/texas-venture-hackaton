@@ -106,7 +106,7 @@ function TrendArrow({ trend }) {
 }
 
 export default function HomePage({ onLogin }) {
-  const [showLogin, setShowLogin] = useState(false);
+  const [showLogin, setShowLogin] = useState(true);
   const [vehicles, setVehicles] = useState([]);
   const [ercot, setErcot] = useState(null);
   const [loginError, setLoginError] = useState("");
@@ -148,10 +148,20 @@ export default function HomePage({ onLogin }) {
     const form = e.target;
     const username = form.username?.value?.trim();
     const password = form.password?.value;
+    const accountType = form.accountType?.value || "user";
+
     setLoginError("");
     setLoginLoading(true);
+
     try {
       const data = await login(username, password);
+      const roleHint = accountType === "enterprise" ? "admin" : "operator/developer";
+
+      // Keep selector meaningful without blocking access if backend role differs.
+      if (accountType === "enterprise" && data.role !== "admin") {
+        setLoginError(`Signed in, but this account is not enterprise (${roleHint}).`);
+      }
+
       onLogin({
         token: data.token,
         company: data.company,
@@ -259,11 +269,8 @@ export default function HomePage({ onLogin }) {
       </div>
 
       {showLogin && (
-        <div className="modal-overlay" onClick={() => setShowLogin(false)}>
-          <div
-            className="modal-card"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="modal-overlay">
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">Sign In</h2>
             <form onSubmit={handleLogin}>
               <input
@@ -280,9 +287,14 @@ export default function HomePage({ onLogin }) {
                 autoComplete="current-password"
                 required
               />
-              {loginError && (
-                <p className="modal-error">{loginError}</p>
-              )}
+              <label className="modal-select-label">
+                Account type
+                <select name="accountType" defaultValue="user">
+                  <option value="user">User</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </label>
+              {loginError && <p className="modal-error">{loginError}</p>}
               <button type="submit" disabled={loginLoading}>
                 {loginLoading ? "Signing in…" : "Sign In"}
               </button>
