@@ -6,6 +6,7 @@ import Dashboard from "./Dashboard";
 import JobsView from "./JobsView";
 import FleetView from "./FleetView";
 import EconomicsView from "./EconomicsView";
+import QuotePage from "./quote";
 
 export default function App() {
   const [auth, setAuth] = useState(null);
@@ -41,6 +42,7 @@ export default function App() {
           }
         >
           <Route index element={<JobsView />} />
+          <Route path="quote" element={<QuotePage />} />
           <Route path="fleet" element={<FleetView />} />
           <Route path="economics" element={<EconomicsView />} />
         </Route>
